@@ -203,7 +203,6 @@ st.set_page_config(
     layout="wide" # Use wide mode for better data display
 )
 
-# Custom CSS for bigger buttons
 st.markdown("""
     <style>
     .stDownloadButton > button {
@@ -213,7 +212,7 @@ st.markdown("""
         color: white;
     }
     </style>
-""", unsafe_base_with_markup=True)
+""", unsafe_allow_html=True) # <--- Corrected
 
 st.title("📦 Erebuni Label Generator")
 st.markdown("---")
