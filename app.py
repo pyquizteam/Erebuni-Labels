@@ -196,30 +196,98 @@ def create_pdf_file(data):
     c.save()
     return buffer.getvalue()
 
-st.set_page_config(page_title="Erebuni Label Gen", page_icon="📦")
-st.title("Label Generator")
-st.info("Upload your Excel file (Бочки) to generate labels.")
+# ================= ENHANCED UI =================
+st.set_page_config(
+    page_title="Erebuni Label Gen", 
+    page_icon="📦", 
+    layout="wide" # Use wide mode for better data display
+)
 
-uploaded_file = st.file_uploader("Choose Excel File", type=['xlsx'])
+# Custom CSS for bigger buttons
+st.markdown("""
+    <style>
+    .stDownloadButton > button {
+        width: 100%;
+        height: 3em;
+        background-color: #007bff;
+        color: white;
+    }
+    </style>
+""", unsafe_base_with_markup=True)
+
+st.title("📦 Erebuni Label Generator")
+st.markdown("---")
+
+# Sidebar for file upload
+with st.sidebar:
+    st.header("Upload Center")
+    uploaded_file = st.file_uploader("Choose Excel File (Бочки)", type=['xlsx'])
+    
+    if uploaded_file:
+        st.success("File uploaded successfully!")
+        if st.button("Reset / Clear"):
+            st.rerun()
 
 if uploaded_file:
-    df = pd.read_excel(uploaded_file, skiprows=4)
-    df.columns = [" ".join(str(c).split()) for c in df.columns]
-    for col in ['Нетто соуса на паллете', 'Брутто паллета']:
-        if col in df.columns:
-            df[col] = df[col].ffill()
-    df = df[df['Номер Партии'].notna()].copy()
-    df = df.reset_index(drop=True)
-    st.success(f"Loaded {len(df)} labels from Excel.")
+    # Processing Data
+    with st.spinner("Processing Excel data..."):
+        df = pd.read_excel(uploaded_file, skiprows=4)
+        df.columns = [" ".join(str(c).split()) for c in df.columns]
+        
+        # Apply your working ffill logic
+        for col in ['Нетто соуса на паллете', 'Брутто паллета']:
+            if col in df.columns:
+                df[col] = df[col].ffill()
+                
+        df = df[df['Номер Партии'].notna()].copy()
+        df = df.reset_index(drop=True)
+
+    # Main Dashboard
+    col_stat1, col_stat2 = st.columns(2)
+    col_stat1.metric("Labels to Generate", len(df))
+    col_stat2.metric("Estimated Pallet Pages", len(df) // 4)
+
+    # Data Preview
+    with st.expander("🔍 Preview Loaded Data"):
+        st.dataframe(df.head(10), use_container_width=True)
+
+    st.markdown("### 📥 Generate Documents")
     
+    # Action Buttons
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("Generate PDF"):
-            pdf_data = create_pdf_file(df)
-            st.download_button("Download PDF", pdf_data, "Labels.pdf", "application/pdf")
+        st.subheader("PDF Format")
+        st.caption("Best for direct printing.")
+        if st.button("🚀 Prepare PDF Labels"):
+            with st.spinner("Drawing PDF..."):
+                pdf_data = create_pdf_file(df)
+                st.download_button(
+                    label="💾 Download PDF",
+                    data=pdf_data,
+                    file_name="Labels_Erebuni.pdf",
+                    mime="application/pdf"
+                )
             
     with col2:
-        if st.button("Generate Word"):
-            word_data = create_word_file(df)
-            st.download_button("Download Word", word_data, "Labels.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        st.subheader("Word Format")
+        st.caption("Best for minor manual edits.")
+        if st.button("📝 Prepare Word Labels"):
+            with st.spinner("Building Word document..."):
+                word_data = create_word_file(df)
+                st.download_button(
+                    label="💾 Download Word",
+                    data=word_data,
+                    file_name="Labels_Erebuni.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+
+else:
+    # Welcome Screen when no file is uploaded
+    st.warning("Please upload an Excel file in the sidebar to get started.")
+    st.info("""
+    **Instructions:**
+    1. Ensure your Excel has 'Номер Партии' in the expected column.
+    2. The generator will create 1 label per drum and 1 summary page every 4 drums.
+    3. Make sure 'Arial.ttf' is uploaded to your GitHub repository for correct Cyrillic display.
+    """)
