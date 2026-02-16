@@ -196,11 +196,17 @@ def create_pdf_file(data):
     c.save()
     return buffer.getvalue()
 
+<<<<<<< HEAD
 st.set_page_config(
     page_title="Erebuni Label Gen", 
     page_icon="📦", 
     layout="centered" # Changed to centered for a focused look
 )
+=======
+st.set_page_config(page_title="Erebuni Label Gen", page_icon="📦")
+st.title("Label Generator")
+st.info("Upload your Excel file (Бочки) to generate labels.")
+>>>>>>> 32fc247 (Fixed pallet weights and added ffill)
 
 # Custom CSS to center elements and style buttons
 st.markdown("""
@@ -248,12 +254,10 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file:
-    # Processing Data
     with st.status("Reading data and applying weights...", expanded=False) as status:
         df = pd.read_excel(uploaded_file, skiprows=4)
         df.columns = [" ".join(str(c).split()) for c in df.columns]
         
-        # Apply the pallet weight logic
         for col in ['Нетто соуса на паллете', 'Брутто паллета']:
             if col in df.columns:
                 df[col] = df[col].ffill()
@@ -262,21 +266,28 @@ if uploaded_file:
         df = df.reset_index(drop=True)
         status.update(label="✅ Data Processed Successfully!", state="complete")
 
-    # Metrics Row
     m1, m2, m3 = st.columns(3)
     m1.metric("Labels", len(df))
     m2.metric("Pallets", len(df) // 4)
     if m3.button("🗑️ Restart"):
         st.rerun()
 
-    # Data Preview
     with st.expander("📄 View Data Table Preview"):
         st.dataframe(df, use_container_width=True)
 
     st.markdown("### 📥 Download Generated Files")
     
-    # Action Buttons
+    # df = pd.read_excel(uploaded_file, skiprows=4)
+    # df.columns = [" ".join(str(c).split()) for c in df.columns]
+    # for col in ['Нетто соуса на паллете', 'Брутто паллета']:
+    #     if col in df.columns:
+    #         df[col] = df[col].ffill()
+    # df = df[df['Номер Партии'].notna()].copy()
+    # df = df.reset_index(drop=True)
+    # st.success(f"Loaded {len(df)} labels from Excel.")
+    
     col1, col2 = st.columns(2)
+    
     
     with col1:
         if st.button("🛠️ Prepare PDF Labels"):
