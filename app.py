@@ -196,16 +196,29 @@ def create_pdf_file(data):
     c.save()
     return buffer.getvalue()
 
-# ================= ENHANCED & CLEAN UI =================
 st.set_page_config(
     page_title="Erebuni Label Gen", 
     page_icon="📦", 
-    layout="wide"
+    layout="centered" # Changed to centered for a focused look
 )
 
-# Fix for the CSS error: Change to unsafe_allow_html=True
+# Custom CSS to center elements and style buttons
 st.markdown("""
     <style>
+    /* Center the main title */
+    .stTitle {
+        text-align: center;
+    }
+    
+    /* Center the file uploader label */
+    .stFileUploader label {
+        display: flex;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    /* Style the download buttons */
     .stDownloadButton > button {
         width: 100%;
         height: 3.5em;
@@ -213,25 +226,26 @@ st.markdown("""
         color: white;
         font-weight: bold;
         border-radius: 8px;
+        border: none;
+    }
+    
+    /* Style the generate buttons */
+    .stButton > button {
+        width: 100%;
+        border-radius: 8px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("📦 Erebuni Label Generator")
-st.markdown("---")
+st.write("---")
 
-# Sidebar for Upload Center
-with st.sidebar:
-    st.header("Upload Center")
-    uploaded_file = st.file_uploader(
-        "Choose Excel File (Бочки)", 
-        type=['xlsx'],
-        help="Limit 200MB per file • XLSX"
-    )
-    
-    if uploaded_file:
-        if st.button("🗑️ Clear and Restart"):
-            st.rerun()
+# Main Area Upload (Moved from Sidebar to Center)
+uploaded_file = st.file_uploader(
+    "Upload Center: Choose Excel File (Бочки)", 
+    type=['xlsx'],
+    help="Limit 200MB per file • XLSX"
+)
 
 if uploaded_file:
     # Processing Data
@@ -246,41 +260,43 @@ if uploaded_file:
                 
         df = df[df['Номер Партии'].notna()].copy()
         df = df.reset_index(drop=True)
-        status.update(label="Data ready!", state="complete")
+        status.update(label="✅ Data Processed Successfully!", state="complete")
 
-    # Metrics Section
-    m1, m2 = st.columns(2)
-    m1.metric("Total Labels", len(df))
-    m2.metric("Total Pallets", len(df) // 4)
+    # Metrics Row
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Labels", len(df))
+    m2.metric("Pallets", len(df) // 4)
+    if m3.button("🗑️ Restart"):
+        st.rerun()
 
-    # Clean Preview
-    with st.expander("📄 View Data Preview"):
+    # Data Preview
+    with st.expander("📄 View Data Table Preview"):
         st.dataframe(df, use_container_width=True)
 
-    st.markdown("### 📥 Download Results")
+    st.markdown("### 📥 Download Generated Files")
     
     # Action Buttons
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🛠️ Prepare PDF"):
+        if st.button("🛠️ Prepare PDF Labels"):
             pdf_data = create_pdf_file(df)
             st.download_button(
-                label="💾 Download PDF Labels",
+                label="💾 Download PDF",
                 data=pdf_data,
                 file_name="Erebuni_Labels.pdf",
                 mime="application/pdf"
             )
             
     with col2:
-        if st.button("🛠️ Prepare Word"):
+        if st.button("🛠️ Prepare Word Labels"):
             word_data = create_word_file(df)
             st.download_button(
-                label="💾 Download Word Labels",
+                label="💾 Download Word",
                 data=word_data,
                 file_name="Erebuni_Labels.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
 else:
-    # Only show this if nothing is uploaded
-    st.info("👈 Please upload your Excel file in the sidebar to begin.")
+    # This shows when the app is empty
+    st.info("Please upload your Excel file above to generate the labels and pallet sheets.")
