@@ -197,7 +197,7 @@ def create_pdf_file(data):
     return buffer.getvalue()
 
 st.set_page_config(page_title="Erebuni Label Gen", page_icon="📦")
-st.title("📦 Label Generator")
+st.title("Label Generator")
 st.info("Upload your Excel file (Бочки) to generate labels.")
 
 uploaded_file = st.file_uploader("Choose Excel File", type=['xlsx'])
@@ -205,8 +205,11 @@ uploaded_file = st.file_uploader("Choose Excel File", type=['xlsx'])
 if uploaded_file:
     df = pd.read_excel(uploaded_file, skiprows=4)
     df.columns = [" ".join(str(c).split()) for c in df.columns]
+    for col in ['Нетто соуса на паллете', 'Брутто паллета']:
+        if col in df.columns:
+            df[col] = df[col].ffill()
     df = df[df['Номер Партии'].notna()].copy()
-    
+    df = df.reset_index(drop=True)
     st.success(f"Loaded {len(df)} labels from Excel.")
     
     col1, col2 = st.columns(2)
