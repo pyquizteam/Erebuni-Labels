@@ -196,97 +196,91 @@ def create_pdf_file(data):
     c.save()
     return buffer.getvalue()
 
-# ================= ENHANCED UI =================
+# ================= ENHANCED & CLEAN UI =================
 st.set_page_config(
     page_title="Erebuni Label Gen", 
     page_icon="📦", 
-    layout="wide" # Use wide mode for better data display
+    layout="wide"
 )
 
+# Fix for the CSS error: Change to unsafe_allow_html=True
 st.markdown("""
     <style>
     .stDownloadButton > button {
         width: 100%;
-        height: 3em;
-        background-color: #007bff;
+        height: 3.5em;
+        background-color: #2e7d32;
         color: white;
+        font-weight: bold;
+        border-radius: 8px;
     }
     </style>
-""", unsafe_allow_html=True) # <--- Corrected
+""", unsafe_allow_html=True)
 
 st.title("📦 Erebuni Label Generator")
 st.markdown("---")
 
-# Sidebar for file upload
+# Sidebar for Upload Center
 with st.sidebar:
     st.header("Upload Center")
-    uploaded_file = st.file_uploader("Choose Excel File (Бочки)", type=['xlsx'])
+    uploaded_file = st.file_uploader(
+        "Choose Excel File (Бочки)", 
+        type=['xlsx'],
+        help="Limit 200MB per file • XLSX"
+    )
     
     if uploaded_file:
-        st.success("File uploaded successfully!")
-        if st.button("Reset / Clear"):
+        if st.button("🗑️ Clear and Restart"):
             st.rerun()
 
 if uploaded_file:
     # Processing Data
-    with st.spinner("Processing Excel data..."):
+    with st.status("Reading data and applying weights...", expanded=False) as status:
         df = pd.read_excel(uploaded_file, skiprows=4)
         df.columns = [" ".join(str(c).split()) for c in df.columns]
         
-        # Apply your working ffill logic
+        # Apply the pallet weight logic
         for col in ['Нетто соуса на паллете', 'Брутто паллета']:
             if col in df.columns:
                 df[col] = df[col].ffill()
                 
         df = df[df['Номер Партии'].notna()].copy()
         df = df.reset_index(drop=True)
+        status.update(label="Data ready!", state="complete")
 
-    # Main Dashboard
-    col_stat1, col_stat2 = st.columns(2)
-    col_stat1.metric("Labels to Generate", len(df))
-    col_stat2.metric("Estimated Pallet Pages", len(df) // 4)
+    # Metrics Section
+    m1, m2 = st.columns(2)
+    m1.metric("Total Labels", len(df))
+    m2.metric("Total Pallets", len(df) // 4)
 
-    # Data Preview
-    with st.expander("🔍 Preview Loaded Data"):
-        st.dataframe(df.head(10), use_container_width=True)
+    # Clean Preview
+    with st.expander("📄 View Data Preview"):
+        st.dataframe(df, use_container_width=True)
 
-    st.markdown("### 📥 Generate Documents")
+    st.markdown("### 📥 Download Results")
     
     # Action Buttons
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("PDF Format")
-        st.caption("Best for direct printing.")
-        if st.button("🚀 Prepare PDF Labels"):
-            with st.spinner("Drawing PDF..."):
-                pdf_data = create_pdf_file(df)
-                st.download_button(
-                    label="💾 Download PDF",
-                    data=pdf_data,
-                    file_name="Labels_Erebuni.pdf",
-                    mime="application/pdf"
-                )
+        if st.button("🛠️ Prepare PDF"):
+            pdf_data = create_pdf_file(df)
+            st.download_button(
+                label="💾 Download PDF Labels",
+                data=pdf_data,
+                file_name="Erebuni_Labels.pdf",
+                mime="application/pdf"
+            )
             
     with col2:
-        st.subheader("Word Format")
-        st.caption("Best for minor manual edits.")
-        if st.button("📝 Prepare Word Labels"):
-            with st.spinner("Building Word document..."):
-                word_data = create_word_file(df)
-                st.download_button(
-                    label="💾 Download Word",
-                    data=word_data,
-                    file_name="Labels_Erebuni.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
-
+        if st.button("🛠️ Prepare Word"):
+            word_data = create_word_file(df)
+            st.download_button(
+                label="💾 Download Word Labels",
+                data=word_data,
+                file_name="Erebuni_Labels.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
 else:
-    # Welcome Screen when no file is uploaded
-    st.warning("Please upload an Excel file in the sidebar to get started.")
-    st.info("""
-    **Instructions:**
-    1. Ensure your Excel has 'Номер Партии' in the expected column.
-    2. The generator will create 1 label per drum and 1 summary page every 4 drums.
-    3. Make sure 'Arial.ttf' is uploaded to your GitHub repository for correct Cyrillic display.
-    """)
+    # Only show this if nothing is uploaded
+    st.info("👈 Please upload your Excel file in the sidebar to begin.")
