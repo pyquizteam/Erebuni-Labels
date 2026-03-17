@@ -196,19 +196,15 @@ def create_pdf_file(data):
     c.save()
     return buffer.getvalue()
 
-<<<<<<< HEAD
 st.set_page_config(
     page_title="Erebuni Label Gen", 
     page_icon="📦", 
-    layout="centered" # Changed to centered for a focused look
+    layout="centered" 
 )
-=======
-st.set_page_config(page_title="Erebuni Label Gen", page_icon="📦")
-st.title("Label Generator")
-st.info("Upload your Excel file (Бочки) to generate labels.")
->>>>>>> 32fc247 (Fixed pallet weights and added ffill)
+# st.set_page_config(page_title="Erebuni Label Gen", page_icon="📦")
+# st.title("Label Generator")
+# st.info("Upload your Excel file (Бочки) to generate labels.")
 
-# Custom CSS to center elements and style buttons
 st.markdown("""
     <style>
     /* Center the main title */
