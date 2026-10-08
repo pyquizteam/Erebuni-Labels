@@ -182,14 +182,11 @@ def create_pdf_file(data):
             c.drawCentredString(LABEL_W / 2, 75 * mm, f"ПАЛЕТА \u2116 {pallet_counter:02d}")
             c.setFont(f_bold, 24)
             val_net = row['Нетто соуса на паллете']
-            val_gross = row['Брутто паллета']
-            
+
             net_str = f"{float(val_net):.1f}".replace('.', ',') if pd.notna(val_net) else "0,0"
-            gross_str = f"{float(val_gross):.1f}".replace('.', ',') if pd.notna(val_gross) else "0,0"
-            
-            LEFT_ALIGN_X = 25 * mm 
+
+            LEFT_ALIGN_X = 25 * mm
             c.drawString(LEFT_ALIGN_X, 45 * mm, f"Вес Нетто  -  {net_str}")
-            c.drawString(LEFT_ALIGN_X, 20 * mm, f"Вес Брутто  -  {gross_str}")
             pallet_counter += 1
             c.showPage()
 
