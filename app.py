@@ -177,9 +177,13 @@ def create_pdf_file(data):
 
         c.showPage()
 
-        if (index + 1) % 4 == 0:
+        is_last_of_pallet = (index + 1 == len(data)
+                             or data.at[index + 1, 'pallet_group'] != row['pallet_group'])
+        if is_last_of_pallet:
+            pallet_no = row.get('Номер Паллеты')
+            pallet_no = int(pallet_no) if pd.notna(pallet_no) else pallet_counter
             c.setFont(f_bold, 28)
-            c.drawCentredString(LABEL_W / 2, 75 * mm, f"ПАЛЕТА \u2116 {pallet_counter:02d}")
+            c.drawCentredString(LABEL_W / 2, 75 * mm, f"ПАЛЕТА \u2116 {pallet_no:02d}")
             c.setFont(f_bold, 24)
             val_net = row['Нетто соуса на паллете']
 
@@ -251,17 +255,21 @@ if uploaded_file:
         df = pd.read_excel(uploaded_file, skiprows=4)
         df.columns = [" ".join(str(c).split()) for c in df.columns]
         
-        for col in ['Нетто соуса на паллете', 'Брутто паллета']:
+        # Pallets are separated by blank rows, and may hold any number of barrels
+        is_label = df['Номер Партии'].notna()
+        df['pallet_group'] = (~is_label).cumsum()
+        df = df[is_label].copy()
+
+        for col in ['Номер Паллеты', 'Нетто соуса на паллете', 'Брутто паллета']:
             if col in df.columns:
-                df[col] = df[col].ffill()
-                
-        df = df[df['Номер Партии'].notna()].copy()
+                df[col] = df.groupby('pallet_group')[col].transform('first')
+
         df = df.reset_index(drop=True)
         status.update(label="✅ Data Processed Successfully!", state="complete")
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Labels", len(df))
-    m2.metric("Pallets", len(df) // 4)
+    m2.metric("Pallets", df['pallet_group'].nunique())
     if m3.button("🗑️ Restart"):
         st.rerun()
 
